@@ -6,11 +6,9 @@ require 'sinatra/activerecord'  # Критически важно!
 require 'active_record'
 require_relative 'lib/user'
 require_relative 'lib/level'
+require_relative 'lib/product'
+require_relative 'lib/operation'
 Bundler.require
-
-# get '/hello' do
-#  'Hello world!'
-# end
 
 module LoyaltyCount
 
@@ -85,6 +83,18 @@ module LoyaltyCount
       Level.get_template_id_by_name(params[:name]).to_s
     end
 
+    get '/sql_level_discount/:id' do
+      Level.get_discount_by_id(params[:id]).to_s
+    end
+
+    get '/sql_level_cashback/:id' do
+      Level.get_cashback_by_id(params[:id]).to_s
+    end
+
+    get '/sql_product_rule/:id' do
+      Product.get_rule_by_id(params[:id]).to_s
+    end
+
     get '/sql_info' do
       User.get_users.to_s
       Level.get_levels.to_s
@@ -94,9 +104,50 @@ module LoyaltyCount
     get '/results' do
       erb :results
     end
- 
+
+    get '/operation' do
+      "Operation X!"
+    end
+
+    # post '/operation' do
+    #  request.body.rewind
+    #  json_data = JSON.parse(request.body.read)
+    #  Operation.count(json_data)
+    #  rescue JSON::ParserError
+    #    status 400
+    #    "Неверный формат JSON"
+    # end
+
+    post '/operation' do
+      # Логируем факт получения запроса
+      "[#{Time.now}] POST /operation received"
+      
+      begin
+        request.body.rewind
+        raw_body = request.body.read
+        puts "Raw request body: #{raw_body}"
+        
+        json_data = JSON.parse(raw_body)
+        puts "Parsed JSON data: #{json_data.inspect}"
+        
+        # Логируем вызов Operation.count
+        result = Operation.count(json_data)
+        puts "Operation.count returned: #{result.inspect}"
+        
+        # Возвращаем результат
+        result.to_s
+      rescue JSON::ParserError => e
+        puts "JSON parse error: #{e.message}"
+        status 400
+        "Неверный формат JSON"
+      rescue => e
+        puts "Unexpected error: #{e.class}: #{e.message}"
+        puts e.backtrace.join("\n")
+        status 500
+        "Внутренняя ошибка сервера"
+      end
+    end
   end
- 
 end
 
 LoyaltyCount::App.run! if __FILE__ == $0
