@@ -1,3 +1,6 @@
+require_relative 'user'
+require_relative 'level'
+
 class Operation < ActiveRecord::Base
   @@SQLITE_DB_FILE = File.expand_path('../db/test.db', __dir__)
   
@@ -5,7 +8,36 @@ class Operation < ActiveRecord::Base
     # info = info
     # puts info
     # {request_data: info}
-    {user_id: info['user_id']}
+    user_inf =  User.get_user_by_id(info['user_id']).flatten.to_s
+    user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
+    # level_id =  User.get_template_by_id(info['user_id']).flatten.to_s
+    discount = Level.get_discount_by_id(user_template_id[0]).to_s
+    cashback = Level.get_cashback_by_id(user_template_id[0]).to_s
+    positions_count = info['positions'].count
+    positions = info['positions']
+    # discounted_positions = positions.map {|p| p['price'] * (100 - 10) / 100}
+    discounted_positions = positions.map do |p|
+      {
+        'id' => p['id'],
+        'price' => p['price'] * (100 - discount.to_i) / 100,
+        'quantity' => p['quantity']
+      }
+    end
+    total_items = info['positions'].sum { |p| p['quantity'] }
+    total_price = info['positions'].sum { |p| p['price'] * p['quantity']}
+    {
+      # user_id: info['user_id'],
+      user_info: user_inf,
+      user_template_id: user_template_id, #[0].to_i,
+      # template: level_id['id'].to_i,
+      discount: discount,
+      cashback: cashback,
+      positions_count: positions_count,
+      # positions: positions,
+      discounted_positions: discounted_positions,
+      total_items: total_items,
+      total_price: total_price
+    }
     #{
     #request_data: info,
     # metadata: {

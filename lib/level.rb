@@ -38,7 +38,7 @@ class Level < ActiveRecord::Base
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
     result = db.execute("SELECT id FROM Templates WHERE name = ?", name.to_s).flatten.join
     db.close
-    return result
+    return result.to_i
   end
 
   def self.get_discount_by_id(id)

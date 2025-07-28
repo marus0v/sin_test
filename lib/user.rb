@@ -31,7 +31,7 @@ class User < ActiveRecord::Base
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
     result = db.execute("SELECT template_id FROM Users WHERE id = ?", id.to_i)
     db.close
-    return result
+    return result[0]
   end
 
   def self.get_bonus_by_id(id)
