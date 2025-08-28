@@ -31,14 +31,71 @@ class Product < ActiveRecord::Base
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
     result = db.execute("SELECT name FROM Products WHERE id = ?", id.to_i)
     db.close
+    # if result.empty? return nil
+    # else return result
     return result
   end
 
-  def self.get_rule_by_id(id)
+  def self.get_type_by_id(id)
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    result = db.execute("SELECT type, value FROM Products WHERE id = ?", id.to_i).flatten
+    result = db.execute("SELECT type FROM Products WHERE id = ?", id.to_i).flatten
     db.close
-    return result
+    if result.empty?
+      return nil
+    else
+      return result[0]
+    end
+    # return result[0]
+  end
+
+  def self.get_value_by_id(id)
+    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    result = db.execute("SELECT value FROM Products WHERE id = ?", id.to_i).flatten
+    db.close
+    if result.empty?
+      return nil
+    else
+      return result[0]
+    end
+    # return result
+  end
+
+  def self.get_type_desc(id)
+    type = Product.get_type_by_id(id)
+    case type
+    when 'increased_cashback'
+      desc = "Дополнительный кешбек"
+      value = self.get_value_by_id(id)
+      type_desc = "#{desc} #{value}%"
+    when 'discount'
+      desc = "Дополнительная скидка"
+      value = self.get_value_by_id(id)
+      type_desc = "#{desc} #{value}%"
+    when 'noloyalty'
+      desc = "Товар не участвует в программе лояльности"
+      value = nil
+      type_desc = "#{desc}"
+    else
+      type_desc = nil
+    end
+    # db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    # result = db.execute("SELECT value FROM Products WHERE id = ?", id.to_i).flatten
+    # db.close
+    # if result.empty?
+    #  return nil
+    # else
+    #  return result[0]
+    # end
+    return type_desc
+  end
+
+  def self.get_discount_percent(id)
+    type = Product.get_type_by_id(id)
+    if type == 'discount'
+      return Product.get_value_by_id(id)
+    else
+      return 0
+    end
   end
     
     def save_to_db

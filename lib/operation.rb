@@ -1,17 +1,28 @@
 require_relative 'user'
 require_relative 'level'
+require_relative 'product'
 
 class Operation < ActiveRecord::Base
   @@SQLITE_DB_FILE = File.expand_path('../db/test.db', __dir__)
   
+  # def self.get_last_id
+  #  db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+  #  result = db.execute("SELECT MAX(id) FROM operations").flatten
+  #  db.close
+  #  # result.to_s
+  #  return result.to_i + 1
+  # end
+
   def self.count(info)
     # info = info
     # puts info
     # {request_data: info}
-    user_inf =  User.get_user_by_id(info['user_id']).flatten.to_s
+    user_inf =  User.get_user_by_id(info['user_id']).flatten #.to_s
     user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
     # level_id =  User.get_template_by_id(info['user_id']).flatten.to_s
-    discount = Level.get_discount_by_id(user_template_id[0]).to_s
+    # last_id = Operation.get_last_id
+    # discount = Level.get_discount_by_id(user_template_id[0]).to_s
+    discount = 0
     cashback = Level.get_cashback_by_id(user_template_id[0]).to_s
     positions_count = info['positions'].count
     positions = info['positions']
@@ -20,15 +31,40 @@ class Operation < ActiveRecord::Base
       {
         'id' => p['id'],
         'price' => p['price'] * (100 - discount.to_i) / 100,
-        'quantity' => p['quantity']
+        'quantity' => p['quantity'],
+        'type' => Product.get_type_by_id(p['id']),
+        'value' => Product.get_value_by_id(p['id']),
+        'type_desc' => Product.get_type_desc(p['id']),
+        'discount_percent' => Product.get_discount_percent(p['id']),
+        'discount_summ' => p['price'] - p['price'] * (100 - Product.get_discount_percent(p['id']).to_i) / 100
       }
     end
     total_items = info['positions'].sum { |p| p['quantity'] }
     total_price = info['positions'].sum { |p| p['price'] * p['quantity']}
+    total_discounted_price = discounted_positions.sum { |p| p['price'] * p['quantity']}
+    discount_summ = (discounted_positions.sum { |p| p['discount_summ'].to_i }).to_f.round(1)
+    # order_summ = info['positions'].sum { |p| p['price'] * p['quantity']}
+    discount_value = ((discount_summ.to_f / total_price ) * 100).round(2)
+    discount = {
+        'summ' => discount_summ,
+        'value' => discount_value
+    }
+    # end
+
+    # return
     {
       # user_id: info['user_id'],
-      user_info: user_inf,
-      user_template_id: user_template_id, #[0].to_i,
+      status: 200,
+      # user_info: user_inf,
+      user: {
+        id: user_inf[0],
+        template_id: user_inf[1],
+        name: user_inf[2],
+        bonus: user_inf[3]
+      },
+      operation_id: 666,
+      summ: 734.0,
+      # user_template_id: user_template_id, #[0].to_i,
       # template: level_id['id'].to_i,
       discount: discount,
       cashback: cashback,
@@ -36,18 +72,9 @@ class Operation < ActiveRecord::Base
       # positions: positions,
       discounted_positions: discounted_positions,
       total_items: total_items,
-      total_price: total_price
+      total_price: total_price,
+      total_discounted_price: total_discounted_price
     }
-    #{
-    #request_data: info,
-    # metadata: {
-    #  user_id: info['user_id'],
-    #  positions_count: info['positions'].count,
-    #  total_items: info['positions'].sum { |p| p['quantity'] },
-    #  total_price: info['positions'].sum { |p| p['price'] * p['quantity'] }
-    #},
-    #processed_at: Time.now.utc.iso8601
-    #}
   end
 
   def self.get_products
@@ -85,7 +112,7 @@ class Operation < ActiveRecord::Base
     return result
   end
     
-    def save_to_db
+  def save_to_db
         db = SQLite3::Database.open(@@SQLITE_DB_FILE) # открываем "соединение" к базе SQLite
         db.results_as_hash = true # настройка соединения к базе, он результаты из базы преобразует в Руби хэши
     
@@ -107,6 +134,5 @@ class Operation < ActiveRecord::Base
     
         # возвращаем идентификатор записи в базе
         return insert_row_id
-      end
-  
+  end
 end
