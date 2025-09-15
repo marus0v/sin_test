@@ -14,23 +14,19 @@ class Operation < ActiveRecord::Base
   # end
 
   def self.count(info)
-    # info = info
-    # puts info
-    # {request_data: info}
     user_inf =  User.get_user_by_id(info['user_id']).flatten #.to_s
-    user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
-    # level_id =  User.get_template_by_id(info['user_id']).flatten.to_s
-    # last_id = Operation.get_last_id
-    # discount = Level.get_discount_by_id(user_template_id[0]).to_s
-    discount = 0
-    cashback = Level.get_cashback_by_id(user_template_id[0]).to_s
+    user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_sruby
+    user_discount = Level.get_discount_by_id(user_template_id[0]).to_i
+    # discount = 0
+    # discount_level = Level.get_discount_by_id(user_template_id[0]).to_i
+    # cashback = Level.get_cashback_by_id(user_template_id[0]).to_s
+    user_cashback = Level.get_cashback_by_id(user_template_id[0]).to_i
     positions_count = info['positions'].count
     positions = info['positions']
-    # discounted_positions = positions.map {|p| p['price'] * (100 - 10) / 100}
     discounted_positions = positions.map do |p|
       {
         'id' => p['id'],
-        'price' => p['price'] * (100 - discount.to_i) / 100,
+        'price' => p['price'] * (100 - user_discount) / 100,
         'quantity' => p['quantity'],
         'type' => Product.get_type_by_id(p['id']),
         'value' => Product.get_value_by_id(p['id']),
@@ -49,12 +45,45 @@ class Operation < ActiveRecord::Base
         'summ' => discount_summ,
         'value' => discount_value
     }
+    cashback_positions = discounted_positions.map do |p|
+      product_id = p['id']
+      product_inf = Product.get_product_discount_cashback(p['id'])
+      discounted_price = (p['price'] * (100 - user_discount - p['discount_percent'].to_i) / 100).to_f
+      {
+        'id' => product_id,
+        # 'price' => p['price'] * (100 - user_discount - p['discount_percent'].to_i) / 100,
+        'price' => discounted_price,
+        'quantity' => p['quantity'],
+        'type' => product_inf['type'],
+        # 'type' => Product.get_product_discount_cashback(p['id'])['type'], #.to_s,
+        # 'value' => Product.get_value_by_id(p['id']),
+        # 'cashback_value' => Product.get_product_discount_cashback(p['id'])['cashback_value'],
+        'cashback_value' => product_inf['cashback_value'],
+        # 'type_desc' => Product.get_type_desc(p['id']),
+        'bonus_max_writeoff' => p['type'].to_s == 'noloyalty' ? 0 : (discounted_price * p['quantity'].to_i),
+        # case p['type']
+        # when 'noloyalty'
+        #   'bonus_max_writeoff' => 0
+        # when   : (p['price'] * p['quantity)']),
+        'discount_percent' => Product.get_discount_percent(p['id']),
+        'discount_summ' => p['price'] - p['price'] * (100 - Product.get_discount_percent(p['id']).to_i) / 100
+      }
+    end
+    max_writeoff = (cashback_positions.sum { |p| p['bonus_max_writeoff'].to_i }).to_f.round(1)
+    cashback = {
+        'existed_summ': user_inf[3],
+        # 'allowed_summ': 434.0,
+        'allowed_summ': max_writeoff,
+        'value': "4.19%",
+        'will_add': 31
+    }
     # end
 
     # return
     {
       # user_id: info['user_id'],
       status: 200,
+      discount_level: user_discount,# discount_level,
       # user_info: user_inf,
       user: {
         id: user_inf[0],
@@ -64,16 +93,18 @@ class Operation < ActiveRecord::Base
       },
       operation_id: 666,
       summ: 734.0,
+      positions: discounted_positions,
       # user_template_id: user_template_id, #[0].to_i,
       # template: level_id['id'].to_i,
       discount: discount,
       cashback: cashback,
-      positions_count: positions_count,
+      cashback_positions: cashback_positions
+      #positions_count: positions_count,
       # positions: positions,
-      discounted_positions: discounted_positions,
-      total_items: total_items,
-      total_price: total_price,
-      total_discounted_price: total_discounted_price
+      #discounted_positions: discounted_positions,
+      #total_items: total_items,
+      #total_price: total_price,
+      #total_discounted_price: total_discounted_price
     }
   end
 
