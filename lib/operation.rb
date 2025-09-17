@@ -65,17 +65,24 @@ class Operation < ActiveRecord::Base
         # when 'noloyalty'
         #   'bonus_max_writeoff' => 0
         # when   : (p['price'] * p['quantity)']),
-        'discount_percent' => Product.get_discount_percent(p['id']),
+        'bonus_add' => p['type'].to_s == 'noloyalty' ? 0 : ((discounted_price * (user_cashback + product_inf['cashback_value']) * p['quantity'] / 100).to_i),
+        # 'discount_percent' => Product.get_discount_percent(p['id']),
         'discount_summ' => p['price'] - p['price'] * (100 - Product.get_discount_percent(p['id']).to_i) / 100
       }
     end
     max_writeoff = (cashback_positions.sum { |p| p['bonus_max_writeoff'].to_i }).to_f.round(1)
+    total_bonus_add = (cashback_positions.sum { |p| p['bonus_add'].to_i }).to_f.round(0)
+    total_bonus_percent = ((total_bonus_add / total_discounted_price.to_f) * 100).to_f .round(2)
     cashback = {
         'existed_summ': user_inf[3],
         # 'allowed_summ': 434.0,
         'allowed_summ': max_writeoff,
-        'value': "4.19%",
-        'will_add': 31
+        # 'value': "4.19%",
+        #'tba': total_bonus_add,
+        #'tdp': total_discounted_price,
+        #'value_test': total_bonus_add / total_discounted_price.to_f,
+        'value': total_bonus_percent.to_s + "%",
+        'will_add': total_bonus_add
     }
     # end
 
