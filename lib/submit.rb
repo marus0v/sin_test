@@ -1,8 +1,9 @@
 require_relative 'user'
 require_relative 'level'
 require_relative 'product'
+require_relative 'operation'
 
-class Operation < ActiveRecord::Base
+class Submit < ActiveRecord::Base
   @@SQLITE_DB_FILE = File.expand_path('../db/test.db', __dir__)
   
   # def self.get_last_id
@@ -21,10 +22,24 @@ class Operation < ActiveRecord::Base
   end
 
   def self.count(info)
-    new_operation_id = (Operation.get_last_id + 1).to_i
-    user_inf =  User.get_user_by_id(info['user_id']).flatten #.to_s
-    user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
-    user_discount = Level.get_discount_by_id(user_template_id[0]).to_i
+    puts info.to_s
+    user_inf =  info['user']# .flatten #.to_s
+    puts user_inf.to_s
+    # user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
+    user_id = user_inf['id']
+    puts user_id.to_i
+    user_template_id = user_inf['template_id']
+    puts user_template_id.to_i
+    operation_id = info['operation_id'].to_i
+    puts operation_id
+    operation_write_off = info['write_off']
+    puts operation_write_off.to_i
+    operation = Operation.get_operation_by_id(operation_id)
+    # operation = Operation.get_operation_by_id(1)
+    puts operation# .to_s
+    operation_max_write_off = operation[3]
+    puts operation_max_write_off.to_s
+    # user_discount = Level.get_discount_by_id(user_template_id[0]).to_i
     # discount = 0
     # discount_level = Level.get_discount_by_id(user_template_id[0]).to_i
     # cashback = Level.get_cashback_by_id(user_template_id[0]).to_s
@@ -124,18 +139,25 @@ class Operation < ActiveRecord::Base
     #      ")"# ,
     #    # result.values # массив значений хэша, которые будут вставлены в запрос вместо _плейсхолдеров_
     #  )
-    db.execute("INSERT INTO Operations (id, user_id, cashback, cashback_percent, discount, discount_percent, write_off, allowed_write_off, check_summ, done) " +
+    db.execute("INSERT INTO operations (id, user_id, cashback, cashback_percent, discount, discount_percent, write_off, allowed_write_off, check_summ, done) " +
     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [result[:operation_id], result[:user][:id], result[:cashback][:will_add], result[:cashback][:value], result[:discount]['summ'], result[:discount]['value'], result[:cashback][:allowed_summ], result[:cashback][:allowed_summ], result[:summ], 'false'])
     db.close
     return result
   end
 
-  def self.get_operation_by_id(id)
-    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    result = db.execute("SELECT * FROM Operations WHERE id = ?", id.to_i)
-    db.close
-    return result
-  end
+  # def self.get_products
+        # db = SQLite3::Database.open(@@SQLITE_DB_FILE) # открываем "соединение" к базе SQLite
+        # db.results_as_hash = true # настройка соединения к базе, он результаты из базы преобразует в Руби хэши
+        # db.execute("SELECT * FROM Users")
+        # закрываем соединение
+        #db.close
+
+  #  db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+  #  result = db.execute("SELECT * FROM Products")
+  #  db.close
+    # result.to_s
+  #  return result
+  # end
 
   # def self.get_product_by_id(id)
   #  db = SQLite3::Database.open(@@SQLITE_DB_FILE)

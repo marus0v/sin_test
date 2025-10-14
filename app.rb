@@ -8,6 +8,7 @@ require_relative 'lib/user'
 require_relative 'lib/level'
 require_relative 'lib/product'
 require_relative 'lib/operation'
+require_relative 'lib/submit'
 Bundler.require
 
 module LoyaltyCount
@@ -133,6 +134,40 @@ module LoyaltyCount
         # Логируем вызов Operation.count
         result = Operation.count(json_data)
         puts "Operation.count returned: #{result.inspect}"
+        
+        # Возвращаем результат
+        result.to_s
+      rescue JSON::ParserError => e
+        puts "JSON parse error: #{e.message}"
+        status 400
+        "Неверный формат JSON"
+      rescue => e
+        puts "Unexpected error: #{e.class}: #{e.message}"
+        puts e.backtrace.join("\n")
+        status 500
+        "Внутренняя ошибка сервера"
+      end
+    end
+
+    get '/submit' do
+      "Submit X!"
+    end
+
+    post '/submit' do
+      # Логируем факт получения запроса
+      "[#{Time.now}] POST /submit received"
+      
+      begin
+        request.body.rewind
+        raw_body = request.body.read
+        puts "Raw request body: #{raw_body}"
+        
+        json_data = JSON.parse(raw_body)
+        puts "Parsed JSON data: #{json_data.inspect}"
+        
+        # Логируем вызов Submit.count
+        result = Submit.count(json_data)
+        puts "Submit.count returned: #{result.inspect}"
         
         # Возвращаем результат
         result.to_s
