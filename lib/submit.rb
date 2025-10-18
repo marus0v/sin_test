@@ -49,6 +49,8 @@ class Submit < ActiveRecord::Base
       puts op_check_summ
       op_cashback = ((op_check_summ * operation[3].to_i)/100).round(0)
       puts op_cashback
+      user_bonus = user_inf['bonus'].to_i - op_write_off
+      puts user_bonus
     end
 
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
@@ -62,6 +64,10 @@ class Submit < ActiveRecord::Base
     db.execute(
       "UPDATE operations SET cashback = ?, write_off = ?, check_summ = ?, done = 'true' WHERE id = ?",
       [op_cashback, op_write_off, op_check_summ, operation_id]
+    )
+    db.execute(
+      "UPDATE users SET bonus = ? WHERE id = ?",
+      [user_bonus, user_id]
     )
     #"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [result[:operation_id], result[:user][:id], result[:cashback][:will_add], result[:cashback][:value], result[:discount]['summ'], result[:discount]['value'], result[:cashback][:allowed_summ], result[:cashback][:allowed_summ], result[:summ], 'false'])
     db.close
