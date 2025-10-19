@@ -137,62 +137,64 @@ class Operation < ActiveRecord::Base
     return result
   end
 
-  # def self.get_product_by_id(id)
-  #  db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-  #  result = db.execute("SELECT * FROM Products WHERE id = ?", id.to_i)
-  #  db.close
-  #  return result
-  # end
+  def self.submit(info)
+    puts info.to_s
+    user_inf =  info['user']# .flatten #.to_s
+    puts user_inf.to_s
+    # user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
+    user_id = user_inf['id']
+    puts user_id.to_i
+    user_template_id = user_inf['template_id']
+    puts user_template_id.to_i
+    operation_id = info['operation_id'].to_i
+    puts operation_id
+    operation_write_off = info['write_off'].to_i
+    puts operation_write_off
+    operation = Operation.get_operation_by_id(operation_id).first
+    # operation = Operation.get_operation_by_id(1)
+    puts operation# .to_s
+    operation_max_write_off = operation[9]
+    puts operation_max_write_off.to_s
+    # технически далее должен быть перерасчет операции согласно продуктам и правилам
+    if operation_write_off < operation_max_write_off
+      op_check_summ = operation[7]
+      puts op_check_summ
+      op_write_off = operation_write_off
+      puts op_write_off
+      op_check_summ = op_check_summ - op_write_off
+      puts op_check_summ
+      op_cashback = ((op_check_summ * operation[3].to_i)/100).round(0)
+      puts op_cashback
+      user_bonus = user_inf['bonus'].to_i - op_write_off
+      puts user_bonus
+    end
 
-  # def self.get_name_by_id(id)
-  #  db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-  #  result = db.execute("SELECT name FROM Products WHERE id = ?", id.to_i)
-  #  db.close
-  #  return result
-  # end
-
-  # def self.get_rule_by_id(id)
-  #  db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-  #  result = db.execute("SELECT type, value FROM Products WHERE id = ?", id.to_i).flatten
-  #  db.close
-  #  return result
-  # end
-    
-  def self.save_to_db
-        db = SQLite3::Database.open(@@SQLITE_DB_FILE) # открываем "соединение" к базе SQLite
-        db.results_as_hash = true # настройка соединения к базе, он результаты из базы преобразует в Руби хэши
-    
-        # запрос к базе на вставку новой записи в соответствии с хэшом, сформированным дочерним классом to_db_hash
-        db.execute(
-          "INSERT INTO operations (" +
-            result.keys.join(', ') + # все поля, перечисленные через запятую
-            ") " +
-            " VALUES ( " +
-            ('?,'*result.keys.size).chomp(',') + # строка из заданного числа _плейсхолдеров_ ?,?,?...
-            ")",
-          result.values # массив значений хэша, которые будут вставлены в запрос вместо _плейсхолдеров_
-        )
-    
-        # insert_row_id = db.last_insert_row_id
-    
-        # закрываем соединение
-        db.close
-    
-        # возвращаем идентификатор записи в базе
-        return insert_row_id
+    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    db.results_as_hash = true
+    # db.execute("UPDATE operations SET " +
+    #"cashback = op_cashback, " +
+    #"write_off = op_write_off, " +
+    #"check_summ = op_check_summ, " +
+    #"done = 'true' " +
+    #"WHERE id = operation_id")# +
+    db.execute(
+      "UPDATE operations SET cashback = ?, write_off = ?, check_summ = ?, done = 'true' WHERE id = ?",
+      [op_cashback, op_write_off, op_check_summ, operation_id]
+    )
+    db.execute(
+      "UPDATE users SET bonus = ? WHERE id = ?",
+      [user_bonus, user_id]
+    )
+    #"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [result[:operation_id], result[:user][:id], result[:cashback][:will_add], result[:cashback][:value], result[:discount]['summ'], result[:discount]['value'], result[:cashback][:allowed_summ], result[:cashback][:allowed_summ], result[:summ], 'false'])
+    db.close
+    result = op_cashback
+    return result
   end
 
   def self.get_users
-    # db = SQLite3::Database.open(@@SQLITE_DB_FILE) # открываем "соединение" к базе SQLite
-    # db.results_as_hash = true # настройка соединения к базе, он результаты из базы преобразует в Руби хэши
-    # db.execute("SELECT * FROM Users")
-    # закрываем соединение
-    #db.close
-
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
     result = db.execute("SELECT * FROM Users")
     db.close
-    # result.to_s
     return result
   end
 end

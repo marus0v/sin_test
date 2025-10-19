@@ -166,8 +166,10 @@ module LoyaltyCount
         puts "Parsed JSON data: #{json_data.inspect}"
         
         # Логируем вызов Submit.count
-        result = Submit.count(json_data)
-        puts "Submit.count returned: #{result.inspect}"
+        # result = Submit.count(json_data)
+        # puts "Submit.count returned: #{result.inspect}"
+        result = Operation.submit(json_data)
+        puts "Operation.submit returned: #{result.inspect}"
         
         # Возвращаем результат
         result.to_s
@@ -186,43 +188,3 @@ module LoyaltyCount
 end
 
 LoyaltyCount::App.run! if __FILE__ == $0
-
-# module LivingCostCalc
-# 
-#  class App < Sinatra::Base
-# 
-#    # global settings
-#    configure do
-#      set :root, File.dirname(__FILE__)
-#      set :public_folder, 'public'
-# 
-#      register Sinatra::ActiveRecordExtension
-#    end
-# 
-#    # development settings
-#    configure :development do
-#      # this allows us to refresh the app on the browser without needing to restart the web server
-#      register Sinatra::Reloader
-#    end
-#    
-#    # database settings
-#    set :database_file, 'config/database.yml'
-#
-    # root route
-#    get '/'  do
-#      erb :index
-#    end
- 
-    # start here (where the user enters their info)
-#    get '/start' do
-#      erb :start
-#    end
- 
-    # results
-#    get '/results' do
-#      erb :results
-#    end
- 
-#  end
- 
-# end
