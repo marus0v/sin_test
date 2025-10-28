@@ -7,9 +7,8 @@ gem 'sinatra'
 gem 'activerecord'
 gem 'sinatra-activerecord' # ORM gem
 gem 'sinatra-contrib'
-# gem 'thin'
+gem 'sequel'
 gem 'rake'
-# gem 'faraday'
 gem 'puma'
 
 group :development do

@@ -48,6 +48,8 @@ GEM
     rake (13.0.6)
     ruby2_keywords (0.0.5)
     securerandom (0.4.1)
+    sequel (5.97.0)
+      bigdecimal
     sinatra (4.1.1)
       logger (>= 1.6.0)
       mustermann (~> 3.0)
@@ -78,6 +80,7 @@ DEPENDENCIES
   activerecord
   puma
   rake
+  sequel
   sinatra
   sinatra-activerecord
   sinatra-contrib

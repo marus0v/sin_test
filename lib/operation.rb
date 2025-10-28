@@ -4,14 +4,6 @@ require_relative 'product'
 
 class Operation < ActiveRecord::Base
   @@SQLITE_DB_FILE = File.expand_path('../db/test.db', __dir__)
-  
-  # def self.get_last_id
-  #  db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-  #  result = db.execute("SELECT MAX(id) FROM operations").flatten
-  #  db.close
-  #  # result.to_s
-  #  return result.to_i + 1
-  # end
 
   def self.get_last_id
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
@@ -22,13 +14,15 @@ class Operation < ActiveRecord::Base
 
   def self.count(info)
     new_operation_id = (Operation.get_last_id + 1).to_i
-    user_inf =  User.get_user_by_id(info['user_id']).flatten #.to_s
-    user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
-    user_discount = Level.get_discount_by_id(user_template_id[0]).to_i
+    user_inf =  User.get_user_level_by_id(info['user_id'])#.flatten #.to_s
+    # user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
+    # user_discount = Level.get_discount_by_id(user_template_id[0]).to_i
+    user_discount = user_inf[:discount].to_i
     # discount = 0
     # discount_level = Level.get_discount_by_id(user_template_id[0]).to_i
     # cashback = Level.get_cashback_by_id(user_template_id[0]).to_s
-    user_cashback = Level.get_cashback_by_id(user_template_id[0]).to_i
+    # user_cashback = Level.get_cashback_by_id(user_template_id[0]).to_i
+    user_cashback = user_inf[:cashback].to_i
     positions_count = info['positions'].count
     positions = info['positions']
     discounted_positions = positions.map do |p|
@@ -76,7 +70,7 @@ class Operation < ActiveRecord::Base
     total_bonus_percent = ((total_bonus_add / total_discounted_price.to_f) * 100).to_f .round(2)
     puts total_discounted_price
     cashback = {
-        'existed_summ': user_inf[3],
+        'existed_summ': user_inf[:bonus].to_i,
         # 'allowed_summ': 434.0,
         'allowed_summ': max_writeoff,
         # 'value': "4.19%",
@@ -92,10 +86,10 @@ class Operation < ActiveRecord::Base
     result = {
       status: 200,
       user: {
-        id: user_inf[0],
-        template_id: user_inf[1],
-        name: user_inf[2],
-        bonus: user_inf[3]
+        id: user_inf[:id],
+        template_id: user_inf[:template_id],
+        name: user_inf[:name],
+        bonus: user_inf[:bonus]
       },
       operation_id_01: 666,
       operation_id: new_operation_id,
