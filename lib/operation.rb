@@ -4,6 +4,7 @@ require_relative 'product'
 
 class Operation < ActiveRecord::Base
   @@SQLITE_DB_FILE = File.expand_path('../db/test.db', __dir__)
+  DB = Sequel.connect('sqlite://db/test.db')
 
   def self.get_last_id
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
@@ -14,21 +15,13 @@ class Operation < ActiveRecord::Base
 
   def self.count(info)
     new_operation_id = (Operation.get_last_id + 1).to_i
-    user_inf =  User.get_user_level_by_id(info['user_id'])#.flatten #.to_s
-    # user_template_id = User.get_template_by_id(user_inf[1]) #.flatten.to_s
-    # user_discount = Level.get_discount_by_id(user_template_id[0]).to_i
-    user_discount = user_inf[:discount].to_i
-    # discount = 0
-    # discount_level = Level.get_discount_by_id(user_template_id[0]).to_i
-    # cashback = Level.get_cashback_by_id(user_template_id[0]).to_s
-    # user_cashback = Level.get_cashback_by_id(user_template_id[0]).to_i
-    user_cashback = user_inf[:cashback].to_i
+    user_inf =  User.get_user_level_by_id(info['user_id'])
     positions_count = info['positions'].count
     positions = info['positions']
     discounted_positions = positions.map do |p|
       {
         'id' => p['id'],
-        'price' => p['price'] * (100 - user_discount) / 100,
+        'price' => p['price'] * (100 - user_inf[:discount].to_i) / 100,
         'quantity' => p['quantity'],
         'type' => Product.get_type_by_id(p['id']),
         'value' => Product.get_value_by_id(p['id']),
@@ -50,7 +43,7 @@ class Operation < ActiveRecord::Base
     cashback_positions = discounted_positions.map do |p|
       product_id = p['id']
       product_inf = Product.get_product_discount_cashback(p['id'])
-      discounted_price = (p['price'] * (100 - user_discount - p['discount_percent'].to_i) / 100).to_f
+      discounted_price = (p['price'] * (100 - user_inf[:discount].to_i - p['discount_percent'].to_i) / 100).to_f
       {
         'id' => product_id,
         # 'price' => p['price'] * (100 - user_discount - p['discount_percent'].to_i) / 100,
@@ -59,7 +52,7 @@ class Operation < ActiveRecord::Base
         'type' => product_inf['type'],
         'cashback_value' => product_inf['cashback_value'],
         'bonus_max_writeoff' => p['type'].to_s == 'noloyalty' ? 0 : (discounted_price * p['quantity'].to_i),
-        'bonus_add' => p['type'].to_s == 'noloyalty' ? 0 : ((discounted_price * (user_cashback + product_inf['cashback_value']) * p['quantity'] / 100).to_i),
+        'bonus_add' => p['type'].to_s == 'noloyalty' ? 0 : ((discounted_price * (user_inf[:cashback].to_i + product_inf['cashback_value']) * p['quantity'] / 100).to_i),
         # 'discount_percent' => Product.get_discount_percent(p['id']),
         'discount_summ' => p['price'] - p['price'] * (100 - Product.get_discount_percent(p['id']).to_i) / 100
       }
@@ -80,18 +73,16 @@ class Operation < ActiveRecord::Base
         'value': total_bonus_percent.to_s + "%",
         'will_add': total_bonus_add
     }
-    # end
 
-    # return
     result = {
       status: 200,
       user: {
-        id: user_inf[:id],
-        template_id: user_inf[:template_id],
-        name: user_inf[:name],
-        bonus: user_inf[:bonus]
+        id: user_inf[:id].to_i,
+        template_id: user_inf[:template_id].to_i,
+        name: user_inf[:name].to_s,
+        bonus: user_inf[:bonus].to_i
       },
-      operation_id_01: 666,
+      # operation_id_01: 666,
       operation_id: new_operation_id,
       summ: total_discounted_price.to_f.round(1),
       summ_01: 734.0,
@@ -125,10 +116,11 @@ class Operation < ActiveRecord::Base
   end
 
   def self.get_operation_by_id(id)
-    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    result = db.execute("SELECT * FROM Operations WHERE id = ?", id.to_i)
-    db.close
-    return result
+    operation = DB[:operations].where(id: id).first
+    # db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    # result = db.execute("SELECT * FROM Operations WHERE id = ?", id.to_i)
+    # db.close
+    return operation
   end
 
   def self.submit(info)
@@ -144,20 +136,20 @@ class Operation < ActiveRecord::Base
     puts operation_id
     operation_write_off = info['write_off'].to_i
     puts operation_write_off
-    operation = Operation.get_operation_by_id(operation_id).first
+    operation = Operation.get_operation_by_id(operation_id)#.first
     # operation = Operation.get_operation_by_id(1)
-    puts operation# .to_s
-    operation_max_write_off = operation[9]
+    # puts operation# .to_s
+    operation_max_write_off = operation[:allowed_write_off].to_i
     puts operation_max_write_off.to_s
     # технически далее должен быть перерасчет операции согласно продуктам и правилам
     if operation_write_off < operation_max_write_off
-      op_check_summ = operation[7]
+      op_check_summ = operation[:check_summ].to_i
       puts op_check_summ
       op_write_off = operation_write_off
       puts op_write_off
       op_check_summ = op_check_summ - op_write_off
       puts op_check_summ
-      op_cashback = ((op_check_summ * operation[3].to_i)/100).round(0)
+      op_cashback = ((op_check_summ * operation[:cashback_percent].to_i)/100).round(0)
       puts op_cashback
       user_bonus = user_inf['bonus'].to_i - op_write_off
       puts user_bonus
