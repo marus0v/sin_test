@@ -20,6 +20,7 @@ class Operation < ActiveRecord::Base
     positions = info['positions']
     discounted_positions = positions.map do |p|
       {
+        
         'id' => p['id'],
         'price' => p['price'] * (100 - user_inf[:discount].to_i) / 100,
         'quantity' => p['quantity'],
@@ -97,18 +98,9 @@ class Operation < ActiveRecord::Base
       #total_price: total_price,
       #total_discounted_price: total_discounted_price
     }
-    # result.save_to_db
+
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
     db.results_as_hash = true
-    # db.execute(
-    #      "INSERT INTO operations ("
-    #      id
-    #      ")
-    #      VALUES ("
-    #      result['operation_id']
-    #      ")"# ,
-    #    # result.values # массив значений хэша, которые будут вставлены в запрос вместо _плейсхолдеров_
-    #  )
     db.execute("INSERT INTO Operations (id, user_id, cashback, cashback_percent, discount, discount_percent, write_off, allowed_write_off, check_summ, done) " +
     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [result[:operation_id], result[:user][:id], result[:cashback][:will_add], result[:cashback][:value], result[:discount]['summ'], result[:discount]['value'], result[:cashback][:allowed_summ], result[:cashback][:allowed_summ], result[:summ], 'false'])
     db.close
@@ -117,9 +109,6 @@ class Operation < ActiveRecord::Base
 
   def self.get_operation_by_id(id)
     operation = DB[:operations].where(id: id).first
-    # db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    # result = db.execute("SELECT * FROM Operations WHERE id = ?", id.to_i)
-    # db.close
     return operation
   end
 
@@ -151,7 +140,7 @@ class Operation < ActiveRecord::Base
       puts op_check_summ
       op_cashback = ((op_check_summ * operation[:cashback_percent].to_i)/100).round(0)
       puts op_cashback
-      user_bonus = user_inf['bonus'].to_i - op_write_off
+      user_bonus = user_inf['bonus'].to_i - op_write_off + op_cashback
       puts user_bonus
     end
 
@@ -174,13 +163,6 @@ class Operation < ActiveRecord::Base
     #"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [result[:operation_id], result[:user][:id], result[:cashback][:will_add], result[:cashback][:value], result[:discount]['summ'], result[:discount]['value'], result[:cashback][:allowed_summ], result[:cashback][:allowed_summ], result[:summ], 'false'])
     db.close
     result = op_cashback
-    return result
-  end
-
-  def self.get_users
-    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    result = db.execute("SELECT * FROM Users")
-    db.close
     return result
   end
 end
