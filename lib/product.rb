@@ -1,5 +1,6 @@
 class Product < ActiveRecord::Base
   @@SQLITE_DB_FILE = File.expand_path('../db/test.db', __dir__)
+  DB = Sequel.connect('sqlite://db/test.db')
   
   def self.get_products
     db = SQLite3::Database.open(@@SQLITE_DB_FILE)
@@ -8,11 +9,56 @@ class Product < ActiveRecord::Base
     return result
   end
 
-  def self.get_product_by_id(id)
-    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    result = db.execute("SELECT * FROM Products WHERE id = ?", id.to_i)
-    db.close
+  def self.count_product_discount(id, price, quantity, user_inf)
+    # db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    # result = db.execute("SELECT * FROM Products WHERE id = ?", id.to_i)
+    # db.close
+    product_inf = DB[:products].where(id: id).first
+    # if product_inf.empty?
+    if product_inf.nil?
+      product_inf = {:id => 0, :name => 0, :type => 0, :value => 0}
+      #return product_inf = {:id => 0, :name => 0, :type => 0, :value => 0}
+    # else # return result
+    end
+    # return product_inf
+    user_discount = user_inf[:discount]
+    type = product_inf[:type]
+    value = product_inf[:value]
+    type_desc = get_type_desc_by_type(product_inf[:type], product_inf[:value])
+    product_discount_percent = product_inf[:type] == 'discount' ? product_inf[:value] : 0
+    discount_percent = product_discount_percent.to_i + user_discount.to_i
+    discount_summ = price - price * (100 - discount_percent) / 100
+    result = {
+    'id' => id,
+    'price' => price, # * (100 - user_inf[:discount].to_i) / 100,
+    'quantity' => quantity,
+    # 'type' => product_inf[:type],
+    'type' => type,
+    # 'value' => product_inf[:value],
+    'value' => value,
+    # 'type_desc' => get_type_desc_by_type(product_inf[:type]),
+    'type_desc' => type_desc,
+    # 'discount_percent' => Product.get_discount_percent(p['id']),
+    # 'discount_percent' => product_inf[:type] == 'discount' ? product_inf[:value] : 0,
+    'discount_percent' => discount_percent,
+    # 'discount_summ' => p['price'] - p['price'] * (100 - Product.get_discount_percent(p['id']).to_i) / 100
+    'discount_summ' => discount_summ
+    }
+    puts result
     return result
+  end
+
+  def self.get_product_by_id(id)
+    # db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    # result = db.execute("SELECT * FROM Products WHERE id = ?", id.to_i)
+    # db.close
+    product_inf = DB[:products].where(id: id).first
+    if product_inf.empty?
+      product_inf = {:id => 0, :name => 0, :type => 0, :value => 0}
+      #return product_inf = {:id => 0, :name => 0, :type => 0, :value => 0}
+    # else # return result
+    end
+    return product_inf
   end
 
   def self.get_name_by_id(id)
@@ -59,6 +105,27 @@ class Product < ActiveRecord::Base
     when 'discount'
       desc = "Дополнительная скидка"
       value = self.get_value_by_id(id)
+      type_desc = "#{desc} #{value}%"
+    when 'noloyalty'
+      desc = "Товар не участвует в программе лояльности"
+      value = 0
+      type_desc = "#{desc}"
+    else
+      type_desc = 0
+    end
+    return type_desc
+  end
+
+  def self.get_type_desc_by_type(type, value)
+    case type
+    when 'increased_cashback'
+      desc = "Дополнительный кешбек"
+      # value = self.get_value_by_id(id)
+      # value = value
+      type_desc = "#{desc} #{value}%"
+    when 'discount'
+      desc = "Дополнительная скидка"
+      # value = self.get_value_by_id(id)
       type_desc = "#{desc} #{value}%"
     when 'noloyalty'
       desc = "Товар не участвует в программе лояльности"

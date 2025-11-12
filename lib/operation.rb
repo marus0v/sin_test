@@ -19,17 +19,17 @@ class Operation < ActiveRecord::Base
     positions_count = info['positions'].count
     positions = info['positions']
     discounted_positions = positions.map do |p|
-      {
-        
-        'id' => p['id'],
-        'price' => p['price'] * (100 - user_inf[:discount].to_i) / 100,
-        'quantity' => p['quantity'],
-        'type' => Product.get_type_by_id(p['id']),
-        'value' => Product.get_value_by_id(p['id']),
-        'type_desc' => Product.get_type_desc(p['id']),
-        'discount_percent' => Product.get_discount_percent(p['id']),
-        'discount_summ' => p['price'] - p['price'] * (100 - Product.get_discount_percent(p['id']).to_i) / 100
-      }
+      #{
+        Product.count_product_discount(p['id'], p['price'], p['quantity'], user_inf)
+        # 'id' => p['id'],
+        # 'price' => p['price'] * (100 - user_inf[:discount].to_i) / 100,
+        # 'quantity' => p['quantity'],
+        # 'type' => Product.get_type_by_id(p['id']),
+        # 'value' => Product.get_value_by_id(p['id']),
+        # 'type_desc' => Product.get_type_desc(p['id']),
+        # 'discount_percent' => Product.get_discount_percent(p['id']),
+        # 'discount_summ' => p['price'] - p['price'] * (100 - Product.get_discount_percent(p['id']).to_i) / 100
+      #}
     end
     total_items = info['positions'].sum { |p| p['quantity'] }
     total_price = info['positions'].sum { |p| p['price'] * p['quantity']}

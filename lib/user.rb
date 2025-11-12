@@ -13,6 +13,7 @@ class User < ActiveRecord::Base
     user_inf = DB[:users].where(id: id).first
     user_level = DB['select discount, cashback from templates where id = ?', user_inf[:template_id]].first
     result = user_inf.merge(user_level)
+    puts result.to_s
     return result # [:cashback].to_s
   end
 
