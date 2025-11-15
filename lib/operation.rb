@@ -7,9 +7,11 @@ class Operation < ActiveRecord::Base
   DB = Sequel.connect('sqlite://db/test.db')
 
   def self.get_last_id
-    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    result = db.execute("SELECT MAX(id) FROM operations").flatten.first
-    db.close
+    # db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    # result = db.execute("SELECT MAX(id) FROM operations").flatten.first
+    # db.close
+    result = DB[:operations].max(:id)#.first
+    puts result
     return result || 0
   end
 
@@ -33,8 +35,8 @@ class Operation < ActiveRecord::Base
     end
     total_items = info['positions'].sum { |p| p['quantity'] }
     total_price = info['positions'].sum { |p| p['price'] * p['quantity']}
-    total_discounted_price = discounted_positions.sum { |p| p['price'] * p['quantity']}
-    puts total_discounted_price
+    total_discounted_price = discounted_positions.sum { |p| p['price'] * p['quantity']} - discounted_positions.sum { |p| p['discount_summ']}
+    # puts total_discounted_price
     discount_summ = (discounted_positions.sum { |p| p['discount_summ'].to_i }).to_f.round(1)
     discount_value = ((discount_summ.to_f / total_price ) * 100).round(2)
     discount = {
@@ -60,9 +62,9 @@ class Operation < ActiveRecord::Base
     end
     max_writeoff = (cashback_positions.sum { |p| p['bonus_max_writeoff'].to_i }).to_f.round(1)
     total_bonus_add = (cashback_positions.sum { |p| p['bonus_add'].to_i }).to_f.round(0)
-    puts total_discounted_price
-    total_bonus_percent = ((total_bonus_add / total_discounted_price.to_f) * 100).to_f .round(2)
-    puts total_discounted_price
+    # puts total_discounted_price
+    total_bonus_percent = ((total_bonus_add / total_discounted_price.to_f) * 100).to_f.round(2)
+    # puts total_discounted_price
     cashback = {
         'existed_summ': user_inf[:bonus].to_i,
         # 'allowed_summ': 434.0,
@@ -86,7 +88,7 @@ class Operation < ActiveRecord::Base
       # operation_id_01: 666,
       operation_id: new_operation_id,
       summ: total_discounted_price.to_f.round(1),
-      summ_01: 734.0,
+      # summ_01: 734.0,
       positions: discounted_positions,
       discount: discount,
       cashback: cashback #,
@@ -99,11 +101,23 @@ class Operation < ActiveRecord::Base
       #total_discounted_price: total_discounted_price
     }
 
-    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    db.results_as_hash = true
-    db.execute("INSERT INTO Operations (id, user_id, cashback, cashback_percent, discount, discount_percent, write_off, allowed_write_off, check_summ, done) " +
-    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [result[:operation_id], result[:user][:id], result[:cashback][:will_add], result[:cashback][:value], result[:discount]['summ'], result[:discount]['value'], result[:cashback][:allowed_summ], result[:cashback][:allowed_summ], result[:summ], 'false'])
-    db.close
+    # db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    # db.results_as_hash = true
+    # db.execute("INSERT INTO Operations (id, user_id, cashback, cashback_percent, discount, discount_percent, write_off, allowed_write_off, check_summ, done) " +
+    # "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [result[:operation_id], result[:user][:id], result[:cashback][:will_add], result[:cashback][:value], result[:discount]['summ'], result[:discount]['value'], result[:cashback][:allowed_summ], result[:cashback][:allowed_summ], result[:summ], 'false'])
+    # db.close
+    operations = DB[:operations]
+    operations.insert(id: result[:operation_id],
+    user_id: result[:user][:id],
+    cashback: result[:cashback][:will_add],
+    cashback_percent: result[:cashback][:value],
+    discount: result[:discount]['summ'],
+    discount_percent: result[:discount]['value'],
+    write_off: result[:cashback][:allowed_summ],
+    allowed_write_off: result[:cashback][:allowed_summ],
+    check_summ: result[:summ],
+    done: 'false'
+    )
     return result
   end
 
@@ -144,24 +158,31 @@ class Operation < ActiveRecord::Base
       puts user_bonus
     end
 
-    db = SQLite3::Database.open(@@SQLITE_DB_FILE)
-    db.results_as_hash = true
+    #db = SQLite3::Database.open(@@SQLITE_DB_FILE)
+    #db.results_as_hash = true
     # db.execute("UPDATE operations SET " +
     #"cashback = op_cashback, " +
     #"write_off = op_write_off, " +
     #"check_summ = op_check_summ, " +
     #"done = 'true' " +
     #"WHERE id = operation_id")# +
-    db.execute(
-      "UPDATE operations SET cashback = ?, write_off = ?, check_summ = ?, done = 'true' WHERE id = ?",
-      [op_cashback, op_write_off, op_check_summ, operation_id]
-    )
-    db.execute(
-      "UPDATE users SET bonus = ? WHERE id = ?",
-      [user_bonus, user_id]
-    )
+    #db.execute(
+    #  "UPDATE operations SET cashback = ?, write_off = ?, check_summ = ?, done = 'true' WHERE id = ?",
+    #  [op_cashback, op_write_off, op_check_summ, operation_id]
+    #)
+    #db.execute(
+    #  "UPDATE users SET bonus = ? WHERE id = ?",
+    #  [user_bonus, user_id]
+    # )
     #"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [result[:operation_id], result[:user][:id], result[:cashback][:will_add], result[:cashback][:value], result[:discount]['summ'], result[:discount]['value'], result[:cashback][:allowed_summ], result[:cashback][:allowed_summ], result[:summ], 'false'])
-    db.close
+    # db.close
+
+    operations = DB[:operations]
+    users = DB[:users]
+    DB.transaction do
+      operations.where(id: operation_id).update(cashback: op_cashback, write_off: op_write_off, check_summ: op_check_summ, done: 'true')
+      users.where(id: user_id).update(bonus: user_bonus)
+    end
     result = op_cashback
     return result
   end

@@ -26,7 +26,8 @@ class Product < ActiveRecord::Base
     value = product_inf[:value]
     type_desc = get_type_desc_by_type(product_inf[:type], product_inf[:value])
     product_discount_percent = product_inf[:type] == 'discount' ? product_inf[:value] : 0
-    discount_percent = product_discount_percent.to_i + user_discount.to_i
+    # discount_percent = product_discount_percent.to_i + user_discount.to_i
+    discount_percent = type == 'noloyalty' ? 0 : product_discount_percent.to_i + user_discount.to_i
     discount_summ = price - price * (100 - discount_percent) / 100
     result = {
     'id' => id,
@@ -44,7 +45,7 @@ class Product < ActiveRecord::Base
     # 'discount_summ' => p['price'] - p['price'] * (100 - Product.get_discount_percent(p['id']).to_i) / 100
     'discount_summ' => discount_summ
     }
-    puts result
+    # puts result
     return result
   end
 
@@ -189,29 +190,5 @@ class Product < ActiveRecord::Base
     end
     return {'type' => type.to_s, 'desc' => type_desc.to_s, 'discount_value' => discount_value.to_i, 'cashback_value' => cashback_value.to_i}
   end
-    
-    def save_to_db
-        db = SQLite3::Database.open(@@SQLITE_DB_FILE) # открываем "соединение" к базе SQLite
-        db.results_as_hash = true # настройка соединения к базе, он результаты из базы преобразует в Руби хэши
-    
-        # запрос к базе на вставку новой записи в соответствии с хэшом, сформированным дочерним классом to_db_hash
-        db.execute(
-          "INSERT INTO posts (" +
-            to_db_hash.keys.join(', ') + # все поля, перечисленные через запятую
-            ") " +
-            " VALUES ( " +
-            ('?,'*to_db_hash.keys.size).chomp(',') + # строка из заданного числа _плейсхолдеров_ ?,?,?...
-            ")",
-          to_db_hash.values # массив значений хэша, которые будут вставлены в запрос вместо _плейсхолдеров_
-        )
-    
-        insert_row_id = db.last_insert_row_id
-    
-        # закрываем соединение
-        db.close
-    
-        # возвращаем идентификатор записи в базе
-        return insert_row_id
-      end
   
 end
