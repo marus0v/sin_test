@@ -110,6 +110,7 @@ class Operation < ActiveRecord::Base
       users.where(id: user_id).update(bonus: user_bonus)
     end
     result = op_cashback
+    
     return result
   end
 end
