@@ -109,8 +109,20 @@ class Operation < ActiveRecord::Base
       operations.where(id: operation_id).update(cashback: op_cashback, write_off: op_write_off, check_summ: op_check_summ, done: 'true')
       users.where(id: user_id).update(bonus: user_bonus)
     end
-    result = op_cashback
-    
+    # result = op_cashback
+    result = {
+      "status": 200,
+      "message": "Данные успешно обработаны!",
+      "operation": {
+          "user_id": user_inf['id'],
+          "cashback": op_cashback,
+          "cashback_percent": operation[:cashback_percent].to_i,
+          "discount": operation[:discount].to_i,
+          "discount_percent": operation[:discount_percent].to_i,
+          "write_off": op_write_off,
+          "check_summ": op_check_summ
+      }
+    }
     return result
   end
 end
