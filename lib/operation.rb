@@ -12,7 +12,8 @@ class Operation < ActiveRecord::Base
 
   def self.count(info)
     new_operation_id = (Operation.get_last_id + 1).to_i
-    user_inf =  User.get_user_level_by_id(info['user_id'])
+    # user_inf =  User.get_user_level_by_id(info['user_id'])
+    user_inf =  User.get_user_loyalty_by_id(info['user_id'])
     positions_count = info['positions'].count
     positions = info['positions']
     discounted_positions = positions.map do |p|
