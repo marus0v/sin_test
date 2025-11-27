@@ -6,7 +6,7 @@ require 'sinatra/activerecord'  # Критически важно!
 require 'active_record'
 require 'sequel'
 require_relative 'lib/user'
-require_relative 'lib/level'
+# require_relative 'lib/level'
 require_relative 'lib/product'
 require_relative 'lib/operation'
 # require_relative 'lib/submit'
@@ -16,7 +16,7 @@ module LoyaltyCount
 
   class App < Sinatra::Base
  
-    @@SQLITE_DB_FILE = 'db/test.db'
+    # @@SQLITE_DB_FILE = 'db/test.db'
 
     # global settings
     configure do
@@ -115,50 +115,50 @@ module LoyaltyCount
         erb :start
       end
   
-      get '/sql_users' do
-        User.get_users.to_s
-      end
+      # get '/sql_users' do
+      #  User.get_users.to_s
+      # end
   
-      get '/sql_user/:id' do
-        User.get_user_level_by_id(params[:id]).to_s
-      end
+      # get '/sql_user/:id' do
+      #  User.get_user_level_by_id(params[:id]).to_s
+      # end
   
-      get '/sql_user_template/:id' do
-        User.get_template_by_id(params[:id]).to_s
-      end
+      # get '/sql_user_template/:id' do
+      #  User.get_template_by_id(params[:id]).to_s
+      # end
   
-      get '/sql_user_bonus/:id' do
-        User.get_bonus_by_id(params[:id]).to_s
-      end
+      # get '/sql_user_bonus/:id' do
+      #  User.get_bonus_by_id(params[:id]).to_s
+      # end
   
-      get '/sql_level' do
-        Level.get_levels.to_s
-      end
+      # get '/sql_level' do
+      #  Level.get_levels.to_s
+      # end
   
-      get '/sql_level/:name' do
-        Level.get_template_by_name(params[:name]).to_s
-      end
+      # get '/sql_level/:name' do
+      #  Level.get_template_by_name(params[:name]).to_s
+      # end
   
-      get '/sql_level_id/:name' do
-        Level.get_template_id_by_name(params[:name]).to_s
-      end
+      # get '/sql_level_id/:name' do
+      #  Level.get_template_id_by_name(params[:name]).to_s
+      # end
   
-      get '/sql_level_discount/:id' do
-        Level.get_discount_by_id(params[:id]).to_s
-      end
+      # get '/sql_level_discount/:id' do
+      #  Level.get_discount_by_id(params[:id]).to_s
+      # end
   
-      get '/sql_level_cashback/:id' do
-        Level.get_cashback_by_id(params[:id]).to_s
-      end
+      # get '/sql_level_cashback/:id' do
+      #  Level.get_cashback_by_id(params[:id]).to_s
+      # end
   
-      get '/sql_product_rule/:id' do
-        Product.get_rule_by_id(params[:id]).to_s
-      end
+      # get '/sql_product_rule/:id' do
+      #  Product.get_rule_by_id(params[:id]).to_s
+      # end
   
-      get '/sql_info' do
-        User.get_users.to_s
-        Level.get_levels.to_s
-      end
+      # get '/sql_info' do
+      #  User.get_users.to_s
+      #  Level.get_levels.to_s
+      # end
    
       # results
       get '/results' do
