@@ -67,6 +67,7 @@ class Operation < ActiveRecord::Base
       discount: discount,
       cashback: cashback
     }
+
     operations = DB[:operations]
     operations.insert(id: result[:operation_id],
     user_id: result[:user][:id],
@@ -79,7 +80,10 @@ class Operation < ActiveRecord::Base
     check_summ: result[:summ],
     done: 'false'
     )
-    return result
+    # json_output = JSON.pretty_generate(result)
+    json_output = JSON.pretty_generate(result, indent: '  ')
+    # return result
+    return json_output
   end
 
   def self.get_operation_by_id(id)
@@ -124,6 +128,7 @@ class Operation < ActiveRecord::Base
           "check_summ": op_check_summ
       }
     }
-    return result
+    json_output = JSON.pretty_generate(result, indent: '  ')
+    return json_output
   end
 end
