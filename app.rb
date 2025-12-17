@@ -5,6 +5,7 @@ require 'bundler'
 require 'sinatra/activerecord'  # Критически важно!
 require 'active_record'
 require 'sequel'
+require 'json'
 require_relative 'lib/user'
 # require_relative 'lib/level'
 require_relative 'lib/product'
@@ -61,7 +62,9 @@ module LoyaltyCount
         puts "Operation.count returned: #{result.inspect}"
         
         # Возвращаем результат
-        result.to_s
+        # result
+        content_type :json
+        JSON.pretty_generate(result, indent: '  ')
       rescue JSON::ParserError => e
         puts "JSON parse error: #{e.message}"
         status 400
@@ -94,7 +97,9 @@ module LoyaltyCount
         puts "Operation.submit returned: #{result.inspect}"
         
         # Возвращаем результат
-        result.to_s
+        # result
+        content_type :json
+        JSON.pretty_generate(result, indent: '  ')
       rescue JSON::ParserError => e
         puts "JSON parse error: #{e.message}"
         status 400

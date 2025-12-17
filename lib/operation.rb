@@ -81,9 +81,11 @@ class Operation < ActiveRecord::Base
     done: 'false'
     )
     # json_output = JSON.pretty_generate(result)
-    json_output = JSON.pretty_generate(result, indent: '  ')
-    # return result
-    return json_output
+    # content_type :json
+    # json_output = JSON.pretty_generate(result, indent: '  ')
+    return result
+    # return json_output
+    # return JSON.pretty_generate(result, indent: '  ')
   end
 
   def self.get_operation_by_id(id)
@@ -128,7 +130,9 @@ class Operation < ActiveRecord::Base
           "check_summ": op_check_summ
       }
     }
-    json_output = JSON.pretty_generate(result, indent: '  ')
-    return json_output
+    # json_output = JSON.pretty_generate(result, indent: '  ')
+    # content_type :json
+    # return json_output
+    return result
   end
 end
