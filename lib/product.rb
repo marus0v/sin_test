@@ -13,7 +13,7 @@ class Product < ActiveRecord::Base
     product_discount_percent = product_inf[:type] == 'discount' ? product_inf[:value] : 0
     # discount_percent = type == 'noloyalty' ? 0 : product_discount_percent.to_i + user_discount.to_i
     discount_percent = type == 'noloyalty' ? 0 : product_discount_percent.to_i + user_inf[:discount].to_i
-    discount_summ = price - price * (100 - discount_percent) / 100
+    discount_summ = quantity * (price - price * (100 - discount_percent) / 100)
     result = {
     'id' => id,
     'price' => price,
